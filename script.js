@@ -57,6 +57,13 @@ function carregarPergunta() {
             }
             atualizarLista();
 
+            campoResposta.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault(); 
+                    botaoEnviar.click(); 
+                }
+            });
+
             botaoEnviar.addEventListener("click", () => {
                 const resposta = campoResposta.value.trim();
                 if (resposta !== "") {
@@ -64,6 +71,72 @@ function carregarPergunta() {
                     localStorage.setItem("bancoDePerguntas", JSON.stringify(bancoDePerguntas));
                     campoResposta.value = "";
                     atualizarLista();
+                }
+            });
+        } else {
+            document.body.innerHTML = "<h1>Pergunta não encontrada!</h1>";
+        }
+    }
+}
+
+function adicionarPalavraAleatoria(texto, listaRespostas) {
+    const palavraElemento = document.createElement("span");
+    palavraElemento.classList.add("palavra");
+    palavraElemento.innerText = texto;
+
+    // Gerar tamanho aleatório
+    const tamanhoFonte = Math.floor(Math.random() * 20) + 14; // Entre 14px e 34px
+    palavraElemento.style.fontSize = `${tamanhoFonte}px`;
+
+    // Ajustando para garantir que as palavras fiquem dentro do contêiner
+    const maxX = listaRespostas.clientWidth - 100; // Largura máxima sem cortar
+    const maxY = listaRespostas.clientHeight - 50; // Altura máxima sem cortar
+
+    const posX = Math.random() * maxX;
+    const posY = Math.random() * maxY;
+
+    palavraElemento.style.left = `${posX}px`;
+    palavraElemento.style.top = `${posY}px`;
+
+    listaRespostas.appendChild(palavraElemento);
+}
+
+
+function atualizarLista(listaRespostas, respostas) {
+    listaRespostas.innerHTML = ""; 
+    respostas.forEach(resposta => adicionarPalavraAleatoria(resposta, listaRespostas));
+}
+
+function carregarPergunta() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const codigoPergunta = urlParams.get("q");
+
+    if (codigoPergunta) {
+        let bancoDePerguntas = JSON.parse(localStorage.getItem("bancoDePerguntas")) || {};
+
+        if (bancoDePerguntas[codigoPergunta]) {
+            document.body.innerHTML = `
+                <div class="container">
+                    <h1>${bancoDePerguntas[codigoPergunta].pergunta}</h1>
+                    <input type="text" id="campoResposta" placeholder="Digite uma palavra...">
+                    <button id="botaoEnviar">Enviar Palavra</button>
+                    <div id="listaRespostas"></div>
+                </div>
+            `;
+
+            const campoResposta = document.getElementById("campoResposta");
+            const botaoEnviar = document.getElementById("botaoEnviar");
+            const listaRespostas = document.getElementById("listaRespostas");
+
+            atualizarLista(listaRespostas, bancoDePerguntas[codigoPergunta].respostas);
+
+            botaoEnviar.addEventListener("click", () => {
+                const resposta = campoResposta.value.trim();
+                if (resposta !== "") {
+                    bancoDePerguntas[codigoPergunta].respostas.push(resposta);
+                    localStorage.setItem("bancoDePerguntas", JSON.stringify(bancoDePerguntas));
+                    campoResposta.value = "";
+                    adicionarPalavraAleatoria(resposta, listaRespostas);
                 }
             });
         } else {
